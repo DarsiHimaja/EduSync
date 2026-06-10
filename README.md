@@ -30,7 +30,7 @@ Visit: http://localhost:8000
 
 ## Project Structure
 ```
-CurricuForge/
+EduSync/
 ├── frontend/
 │   ├── login.html       # Auth page (login + register)
 │   ├── home.html        # Landing page describing the app
