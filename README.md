@@ -1,4 +1,4 @@
-# CurricuForge 🎓
+# EduSync 🎓
 Generative AI–Powered Curriculum Design System
 
 ## Setup
