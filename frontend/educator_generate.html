@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduSync — Educator Curriculum</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <style>
+    /* ── Tabs ── */
+    .tabs { display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:1.5rem; border-bottom:1px solid var(--border); }
+    .tab-btn { padding:0.55rem 1.1rem; border:none; background:transparent; color:var(--muted); font-size:0.88rem; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all 0.2s; white-space:nowrap; }
+    .tab-btn:hover { color:var(--text); }
+    .tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* ── Chips ── */
+    .lo-chip    { display:inline-block; background:rgba(108,99,255,0.12); color:var(--primary); border-radius:12px; padding:0.15rem 0.55rem; font-size:0.72rem; font-weight:700; margin:1px; }
+    .bloom-chip { display:inline-block; background:rgba(0,212,170,0.12);  color:var(--accent);  border-radius:12px; padding:0.15rem 0.55rem; font-size:0.72rem; font-weight:600; }
+    .type-chip  { display:inline-block; background:rgba(240,165,0,0.12);  color:#f0a500;        border-radius:12px; padding:0.15rem 0.55rem; font-size:0.72rem; font-weight:600; margin:1px; }
+    .marks-badge{ background:rgba(240,165,0,0.15); color:#f0a500; border-radius:8px; padding:0.15rem 0.5rem; font-size:0.75rem; font-weight:700; }
+
+    /* ── Tables ── */
+    .edu-table { width:100%; border-collapse:collapse; font-size:0.84rem; }
+    .edu-table th { background:var(--primary); color:#fff; padding:0.6rem 0.8rem; text-align:left; font-size:0.79rem; white-space:nowrap; }
+    .edu-table td { padding:0.55rem 0.8rem; border-bottom:1px solid var(--border); color:var(--muted); vertical-align:top; }
+    .edu-table tr:nth-child(even) td { background:var(--card2); }
+    .edu-table tr:hover td { background:rgba(108,99,255,0.04); }
+
+    /* ── Semester accordion ── */
+    .sem-block { margin-bottom:1.5rem; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .sem-header { background:var(--card2); padding:1rem 1.4rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; }
+    .sem-header:hover { background:rgba(108,99,255,0.06); }
+    .sem-header h3 { font-size:1rem; font-weight:700; color:var(--text); margin:0; }
+    .sem-header .sem-meta { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; }
+    .sem-toggle { color:var(--muted); font-size:1.1rem; transition:transform 0.2s; }
+    .sem-body { display:none; padding:1.4rem; border-top:1px solid var(--border); }
+    .sem-body.open { display:block; }
+
+    /* ── Week row ── */
+    .week-row { display:grid; grid-template-columns:60px 1fr 1fr 110px 60px 120px; gap:0; border-bottom:1px solid var(--border); }
+    .week-row:last-child { border-bottom:none; }
+    .week-row > div { padding:0.55rem 0.75rem; font-size:0.83rem; }
+    .week-row:nth-child(even) > div { background:var(--card2); }
+    .week-row:hover > div { background:rgba(108,99,255,0.04); }
+    .week-header-row { display:grid; grid-template-columns:60px 1fr 1fr 110px 60px 120px; gap:0; background:var(--primary); border-radius:8px 8px 0 0; }
+    .week-header-row > div { padding:0.5rem 0.75rem; font-size:0.78rem; font-weight:700; color:#fff; }
+
+    /* ── Assessment mini tables ── */
+    .assess-mini { margin-bottom:1.2rem; }
+    .assess-mini h5 { font-size:0.88rem; font-weight:700; color:var(--accent); margin-bottom:0.5rem; }
+
+    /* ── Mark distribution ── */
+    .mark-strip { display:flex; gap:0.8rem; flex-wrap:wrap; margin-bottom:1rem; }
+    .mark-pill { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:0.5rem 1rem; text-align:center; min-width:90px; }
+    .mark-pill .mv { font-size:1.3rem; font-weight:800; color:var(--primary); }
+    .mark-pill .ml { font-size:0.72rem; color:var(--muted); margin-top:0.1rem; }
+
+    /* ── Industry project cards ── */
+    .proj-card { background:var(--card2); border:1px solid var(--border); border-radius:var(--radius); padding:1.2rem; margin-bottom:1rem; }
+    .proj-card h4 { font-size:0.95rem; font-weight:700; color:var(--text); margin-bottom:0.4rem; }
+    .proj-card p  { font-size:0.85rem; color:var(--muted); line-height:1.5; margin-bottom:0.5rem; }
+
+    /* ── Banner ── */
+    .course-banner { background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(0,212,170,0.08)); border:1px solid var(--border); border-radius:var(--radius); padding:2rem; margin-bottom:2rem; }
+    .course-banner h2 { font-size:1.7rem; margin-bottom:0.5rem; }
+    .meta-pill { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:0.3rem 0.9rem; font-size:0.82rem; color:var(--muted); }
+    .meta-pill span { color:var(--text); font-weight:600; }
+
+    /* ── Resource cards ── */
+    .resource-card { background:var(--card2); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.2rem; display:flex; flex-direction:column; gap:0.45rem; }
+    .resource-card a { color:var(--text); font-weight:600; font-size:0.9rem; text-decoration:none; }
+    .resource-card a:hover { color:var(--accent); text-decoration:underline; }
+    .resource-card p { color:var(--muted); font-size:0.8rem; line-height:1.4; }
+
+    @media(max-width:700px){
+      .week-row, .week-header-row { grid-template-columns:40px 1fr 1fr; }
+      .week-row > div:nth-child(4),
+      .week-row > div:nth-child(5),
+      .week-row > div:nth-child(6),
+      .week-header-row > div:nth-child(4),
+      .week-header-row > div:nth-child(5),
+      .week-header-row > div:nth-child(6) { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="gen-wrap">
+    <p class="section-title" style="margin-bottom:0.3rem">Educator <span>Curriculum Generator</span></p>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.8rem">Generate semester-wise &amp; weekly study plans aligned with industry needs</p>
+
+    <!-- ── Input Form ── -->
+    <div class="card" style="max-width:640px;margin-bottom:2rem">
+      <div id="gen-alert" class="alert"></div>
+      <form id="gen-form">
+
+        <div class="form-group">
+          <label>Skill / Subject</label>
+          <input type="text" name="subject" placeholder="e.g. Artificial Intelligence, Full Stack Development, Data Science" required/>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="form-group">
+            <label>Education Level</label>
+            <select name="level">
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate" selected>Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Number of Semesters</label>
+            <select name="semesters">
+              <option value="1">1 Semester</option>
+              <option value="2" selected>2 Semesters</option>
+              <option value="3">3 Semesters</option>
+              <option value="4">4 Semesters</option>
+              <option value="6">6 Semesters</option>
+              <option value="8">8 Semesters</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="form-group">
+            <label>Weekly Hours</label>
+            <select name="weekly_hours">
+              <option value="2">2 hrs / week</option>
+              <option value="3" selected>3 hrs / week</option>
+              <option value="4">4 hrs / week</option>
+              <option value="5">5 hrs / week</option>
+              <option value="6">6 hrs / week</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Industry Focus</label>
+            <select name="industry_focus">
+              <option>Technology / Software</option>
+              <option>Healthcare / Medical</option>
+              <option>Finance / Banking</option>
+              <option>E-Commerce / Retail</option>
+              <option>Manufacturing / IoT</option>
+              <option>Education / EdTech</option>
+              <option>Cybersecurity</option>
+              <option>Data &amp; Analytics</option>
+              <option>Media / Entertainment</option>
+              <option>Government / Public Sector</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="gen-btn" style="width:100%">
+          🎓 Generate Curriculum Plan
+        </button>
+      </form>
+    </div>
+
+    <!-- ── Loader ── -->
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <p id="loader-msg">Generating course overview...</p>
+      <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem">⏱ Elapsed: <span id="elapsed">0s</span> &nbsp;|&nbsp; Each semester takes ~20s due to API rate limits</p>
+    </div>
+
+    <!-- ── Results ── -->
+    <div id="results" style="display:none">
+
+      <!-- Banner -->
+      <div class="course-banner">
+        <h2 id="r-title"></h2>
+        <p id="r-desc" style="margin-bottom:0.8rem"></p>
+        <p id="r-industry" style="color:var(--accent);font-size:0.88rem;margin-bottom:1rem;font-style:italic"></p>
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1.2rem" id="r-meta"></div>
+        <div style="display:flex;gap:0.7rem;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveToMyCourses()">💾 Save Course</button>
+          <button class="btn btn-outline btn-sm" id="pdf-btn" onclick="handleDownloadPDF()">⬇️ Download PDF</button>
+        </div>
+      </div>
+
+      <!-- Prerequisites + Learning Outcomes -->
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.5rem;margin-bottom:2rem">
+        <div class="card">
+          <p style="font-weight:700;margin-bottom:0.8rem">📋 Prerequisites</p>
+          <ul style="list-style:none;padding:0" id="r-prereqs"></ul>
+        </div>
+        <div class="card">
+          <p style="font-weight:700;margin-bottom:0.8rem">🎯 Learning Outcomes</p>
+          <div id="r-los"></div>
+        </div>
+      </div>
+
+      <!-- Main Tabs -->
+      <div class="tabs" id="main-tabs">
+        <button class="tab-btn active" onclick="switchTab('semester-plan',this)">📅 Semester Plan</button>
+        <button class="tab-btn" onclick="switchTab('outcome-mapping',this)">🗺 Outcome Mapping</button>
+        <button class="tab-btn" onclick="switchTab('industry-projects',this)">🏭 Industry Projects</button>
+        <button class="tab-btn" onclick="switchTab('resources',this)">🔗 Resources</button>
+      </div>
+
+      <!-- ── Tab: Semester Plan ── -->
+      <div class="tab-panel active" id="tab-semester-plan">
+        <div id="sem-accordions"></div>
+      </div>
+
+      <!-- ── Tab: Outcome Mapping ── -->
+      <div class="tab-panel" id="tab-outcome-mapping">
+        <div style="overflow-x:auto">
+          <table class="edu-table">
+            <thead>
+              <tr>
+                <th>LO</th><th>Outcome</th><th>Bloom's Level</th>
+                <th>Semesters</th><th>Topics</th><th>Assessed By</th>
+              </tr>
+            </thead>
+            <tbody id="r-mapping"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: Industry Projects ── -->
+      <div class="tab-panel" id="tab-industry-projects">
+        <div id="r-projects"></div>
+      </div>
+
+      <!-- ── Tab: Resources ── -->
+      <div class="tab-panel" id="tab-resources">
+        <div class="grid-3" id="r-resources"></div>
+        <div style="margin-top:1.5rem" id="r-tools"></div>
+      </div>
+
+    </div><!-- /results -->
+  </div>
+
+  <footer>© 2024 EduSync</footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    requireAuth();
+    buildSidebar("Educator Curriculum");
+
+    let _data = null, _req = null;
+
+    // ── Tab switch ─────────────────────────────────────────────────────────
+    function switchTab(name, btn) {
+      document.querySelectorAll("#main-tabs .tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + name).classList.add("active");
+    }
+
+    // ── Form submit ────────────────────────────────────────────────────────
+    document.getElementById("gen-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById("gen-alert");
+      alertEl.textContent = ""; alertEl.className = "alert";
+      const f = e.target;
+      _req = {
+        subject:        f.subject.value.trim(),
+        level:          f.level.value,
+        semesters:      parseInt(f.semesters.value),
+        weekly_hours:   parseInt(f.weekly_hours.value),
+        industry_focus: f.industry_focus.value
+      };
+      document.getElementById("loader").style.display = "block";
+      document.getElementById("results").style.display = "none";
+      document.getElementById("gen-btn").disabled = true;
+
+      // Rotate loader messages
+      const msgs = [
+        "Generating course overview...",
+        "Building semester structure...",
+        "Creating weekly plans...",
+        "Generating assessments...",
+        "Mapping learning outcomes...",
+        "Almost done..."
+      ];
+      let mi = 0;
+      const msgTimer = setInterval(() => {
+        mi = (mi + 1) % msgs.length;
+        const el = document.getElementById("loader-msg");
+        if (el) el.textContent = msgs[mi];
+      }, 4000);
+
+      // Elapsed timer
+      const startTime = Date.now();
+      const elapsedTimer = setInterval(() => {
+        const sec = Math.round((Date.now() - startTime) / 1000);
+        const el = document.getElementById("elapsed");
+        if (el) el.textContent = sec < 60 ? sec + "s" : Math.floor(sec/60) + "m " + (sec%60) + "s";
+      }, 1000);
+      try {
+        _data = await apiFetch("/educator/generate", { method:"POST", body: JSON.stringify(_req) });
+        render(_data, _req);
+      } catch(err) {
+        alertEl.className = "alert alert-error";
+        alertEl.textContent = err.message;
+      } finally {
+        clearInterval(msgTimer);
+        clearInterval(elapsedTimer);
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("gen-btn").disabled = false;
+      }
+    });
+
+    // ── Render ─────────────────────────────────────────────────────────────
+    function render(d, req) {
+      // Banner
+      document.getElementById("r-title").textContent    = d.course_title;
+      document.getElementById("r-desc").textContent     = d.description;
+      document.getElementById("r-industry").textContent = "🏭 " + (d.industry_relevance || "");
+      document.getElementById("r-meta").innerHTML = [
+        ["Level",       req.level],
+        ["Semesters",   req.semesters],
+        ["Weekly Hours",req.weekly_hours + " hrs"],
+        ["Industry",    req.industry_focus],
+        ["Code",        d.course_code || "—"],
+      ].map(([k,v]) => `<div class="meta-pill">${k}: <span>${v}</span></div>`).join("");
+
+      // Prerequisites
+      document.getElementById("r-prereqs").innerHTML = (d.prerequisites||[])
+        .map(p=>`<li style="padding:0.4rem 0;border-bottom:1px solid var(--border);color:var(--muted);font-size:0.87rem">• ${p}</li>`).join("");
+
+      // Learning Outcomes
+      document.getElementById("r-los").innerHTML = (d.learning_outcomes||[])
+        .map(lo=>`
+          <div style="display:flex;gap:0.6rem;align-items:flex-start;padding:0.55rem 0;border-bottom:1px solid var(--border)">
+            <span class="lo-chip">${lo.id}</span>
+            <div style="flex:1">
+              <div style="font-size:0.87rem;color:var(--text);line-height:1.5">${lo.outcome}</div>
+              <span class="bloom-chip" style="margin-top:0.3rem;display:inline-block">${lo.bloom_level}</span>
+            </div>
+          </div>`).join("");
+
+      // ── Semester Accordions ──────────────────────────────────────────────
+      const semBox = document.getElementById("sem-accordions");
+      semBox.innerHTML = "";
+
+      (d.semesters||[]).forEach((sem, si) => {
+        const block = document.createElement("div");
+        block.className = "sem-block";
+
+        const totalHours = (sem.weekly_plan||[]).reduce((s,w)=>s+(w.hours||0),0);
+        const md = sem.mark_distribution || {};
+        const total = Object.values(md).reduce((s,v)=>s+v,0);
+
+        block.innerHTML = `
+          <div class="sem-header" onclick="toggleSem(${si})">
+            <h3>Semester ${sem.semester}: ${sem.title}</h3>
+            <div class="sem-meta">
+              <span class="bloom-chip">${sem.focus||""}</span>
+              <span class="meta-pill" style="font-size:0.75rem">Credits: <span>${sem.credits||4}</span></span>
+              <span class="meta-pill" style="font-size:0.75rem">Total: <span>${totalHours} hrs</span></span>
+              <span class="sem-toggle" id="sem-tog-${si}">▼</span>
+            </div>
+          </div>
+          <div class="sem-body" id="sem-body-${si}">
+
+            <!-- Semester LOs -->
+            <div style="margin-bottom:1rem">
+              <p style="font-size:0.82rem;color:var(--muted);font-weight:600;margin-bottom:0.4rem">OUTCOMES COVERED</p>
+              <div>${(sem.learning_outcomes||[]).map(lo=>`<span class="lo-chip">${lo}</span>`).join(" ")}</div>
+            </div>
+
+            <!-- Weekly Plan table -->
+            <p style="font-weight:700;margin-bottom:0.7rem;font-size:0.95rem">📅 16-Week Plan</p>
+            <div style="overflow-x:auto;margin-bottom:1.5rem">
+              <div class="week-header-row">
+                <div>Week</div><div>Topic</div><div>Subtopics</div>
+                <div>Method</div><div>Hours</div><div>Assessment</div>
+              </div>
+              ${(sem.weekly_plan||[]).map(w=>`
+                <div class="week-row">
+                  <div><span class="lo-chip">W${w.week}</span></div>
+                  <div style="color:var(--text);font-weight:600">${w.topic}</div>
+                  <div>${(w.subtopics||[]).join(" · ")}</div>
+                  <div><span class="bloom-chip">${w.teaching_method}</span></div>
+                  <div style="text-align:center;color:var(--primary);font-weight:700">${w.hours}h</div>
+                  <div>${w.assessment !== "None" ? `<span class="type-chip">${w.assessment}</span>` : `<span style="color:var(--border)">—</span>`}</div>
+                </div>`).join("")}
+            </div>
+
+            <!-- Semester Assessments -->
+            <p style="font-weight:700;margin-bottom:0.8rem;font-size:0.95rem">📝 Semester Assessments</p>
+            ${renderSemAssessments(sem.semester_assessments||{})}
+
+            <!-- Mark Distribution -->
+            <p style="font-weight:700;margin:1rem 0 0.6rem;font-size:0.95rem">📊 Mark Distribution</p>
+            <div class="mark-strip">
+              ${Object.entries(md).map(([k,v])=>`
+                <div class="mark-pill">
+                  <div class="mv">${v}</div>
+                  <div class="ml">${k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())}</div>
+                </div>`).join("")}
+              <div class="mark-pill" style="border-color:var(--primary)">
+                <div class="mv" style="color:var(--accent)">${total}</div>
+                <div class="ml">Total</div>
+              </div>
+            </div>
+          </div>`;
+
+        semBox.appendChild(block);
+        // Auto-open first semester
+        if (si === 0) {
+          block.querySelector(".sem-body").classList.add("open");
+          block.querySelector(".sem-toggle").style.transform = "rotate(180deg)";
+        }
+      });
+
+      // ── Outcome Mapping ──────────────────────────────────────────────────
+      document.getElementById("r-mapping").innerHTML = (d.outcome_topic_mapping||[])
+        .map(m=>`<tr>
+          <td><span class="lo-chip">${m.outcome_id}</span></td>
+          <td style="color:var(--text)">${m.outcome_text}</td>
+          <td><span class="bloom-chip">${m.bloom_level||""}</span></td>
+          <td>${(m.mapped_semesters||[]).map(s=>`<span class="lo-chip">S${s}</span>`).join(" ")}</td>
+          <td>${(m.mapped_topics||[]).join(", ")}</td>
+          <td>${(m.assessment_types||[]).map(a=>`<span class="type-chip">${a}</span>`).join(" ")}</td>
+        </tr>`).join("");
+
+      // ── Industry Projects ────────────────────────────────────────────────
+      document.getElementById("r-projects").innerHTML = (d.industry_projects||[])
+        .map(p=>`
+          <div class="proj-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem">
+              <h4>${p.title}</h4>
+              <span class="lo-chip">Semester ${p.semester}</span>
+            </div>
+            <p>${p.description}</p>
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+              ${(p.skills_covered||[]).map(s=>`<span class="bloom-chip">${s}</span>`).join("")}
+            </div>
+          </div>`).join("");
+
+      // ── Resources ────────────────────────────────────────────────────────
+      document.getElementById("r-resources").innerHTML = (d.resources||[])
+        .map(r=>`
+          <div class="resource-card">
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:0.4rem">
+              <span class="badge badge-purple">${r.type}</span>
+              <div style="display:flex;gap:0.4rem">
+                ${r.platform?`<span style="font-size:0.71rem;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:0.1rem 0.5rem">${r.platform}</span>`:""}
+                <span style="font-size:0.71rem;border-radius:20px;padding:0.1rem 0.5rem;${r.free?'color:var(--accent);background:rgba(0,212,170,0.1)':'color:#f0a500;background:rgba(240,165,0,0.1)'}">${r.free?"Free":"Paid"}</span>
+              </div>
+            </div>
+            <a href="${r.url}" target="_blank" rel="noopener noreferrer">${r.title}</a>
+            <p>${r.description}</p>
+          </div>`).join("");
+
+      const tools = d.recommended_tools || [];
+      document.getElementById("r-tools").innerHTML = tools.length
+        ? `<div class="card"><p style="font-weight:700;margin-bottom:0.7rem">🛠 Recommended Tools &amp; Software</p>
+           <div style="display:flex;gap:0.5rem;flex-wrap:wrap">${tools.map(t=>`<span class="bloom-chip" style="font-size:0.85rem;padding:0.3rem 0.9rem">${t}</span>`).join("")}</div></div>` : "";
+
+      document.getElementById("results").style.display = "block";
+      document.getElementById("results").scrollIntoView({ behavior:"smooth" });
+    }
+
+    // ── Semester assessment mini-tables ───────────────────────────────────
+    function renderSemAssessments(ass) {
+      const rows = (items, cols, mapper) => items.length
+        ? `<table class="edu-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${items.map(mapper).join("")}</tbody></table>`
+        : `<p style="color:var(--muted);font-size:0.82rem">None</p>`;
+
+      return `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div class="assess-mini">
+            <h5>📄 Assignments</h5>
+            ${rows(ass.assignments||[], ["Title","Due","Marks"],
+              a=>`<tr><td style="color:var(--text)">${a.title}</td><td>Wk ${a.week_due}</td><td><span class="marks-badge">${a.marks}m</span></td></tr>`)}
+          </div>
+          <div class="assess-mini">
+            <h5>🧠 Quizzes</h5>
+            ${rows(ass.quizzes||[], ["Title","Week","Marks"],
+              q=>`<tr><td style="color:var(--text)">${q.title}</td><td>Wk ${q.week}</td><td><span class="marks-badge">${q.marks}m</span></td></tr>`)}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="assess-mini">
+            <h5>🚀 Projects</h5>
+            ${rows(ass.projects||[], ["Title","Type","Marks"],
+              p=>`<tr><td style="color:var(--text)">${p.title}</td><td><span class="bloom-chip">${p.type}</span></td><td><span class="marks-badge">${p.marks}m</span></td></tr>`)}
+          </div>
+          <div class="assess-mini">
+            <h5>🔬 Lab Exercises</h5>
+            ${rows(ass.lab_exercises||[], ["Title","Week","Tools"],
+              l=>`<tr><td style="color:var(--text)">${l.title}</td><td>Wk ${l.week}</td><td>${(l.tools||[]).join(", ")}</td></tr>`)}
+          </div>
+        </div>`;
+    }
+
+    // ── Accordion toggle ──────────────────────────────────────────────────
+    function toggleSem(si) {
+      const body = document.getElementById(`sem-body-${si}`);
+      const tog  = document.getElementById(`sem-tog-${si}`);
+      const open = body.classList.toggle("open");
+      tog.style.transform = open ? "rotate(180deg)" : "rotate(0deg)";
+    }
+
+    // ── PDF download ──────────────────────────────────────────────────────
+    async function handleDownloadPDF() {
+      if (!_data || !_req) return;
+      const btn = document.getElementById("pdf-btn");
+      btn.textContent = "Generating PDF..."; btn.disabled = true;
+      try {
+        const token = getToken();
+        const res = await fetch(API + "/educator/download-pdf", {
+          method: "POST",
+          headers: { "Content-Type":"application/json", "Authorization":`Bearer ${token}` },
+          body: JSON.stringify({ curriculum: _data, ..._req })
+        });
+        if (!res.ok) throw new Error("PDF generation failed");
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href     = url;
+        a.download = `EduSync_${_req.subject.replace(/\s+/g,"_")}_Curriculum.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch(err) {
+        alert("PDF download failed: " + err.message);
+      } finally {
+        btn.textContent = "⬇️ Download PDF"; btn.disabled = false;
+      }
+    }
+
+    // ── Save ──────────────────────────────────────────────────────────────
+    async function saveToMyCourses() {
+      if (!_data || !_req) return;
+      const btn = event.target;
+      btn.textContent = "Saving..."; btn.disabled = true;
+      try {
+        const id = Date.now().toString();
+        await dbSaveCourse({
+          course_id: id,
+          title:     _data.course_title,
+          subject:   _req.subject,
+          level:     _req.level,
+          role_type: "educator",
+          meta: {
+            semesters:      _req.semesters,
+            weekly_hours:   _req.weekly_hours,
+            industry_focus: _req.industry_focus,
+            savedAt:        new Date().toISOString()
+          },
+          full_data: { data: _data, req: _req }
+        });
+        btn.textContent = "✅ Saved!"; 
+      } catch(err) {
+        btn.textContent = "Save Failed";
+        alert("Could not save: " + err.message);
+      } finally {
+        setTimeout(()=>{ btn.textContent="💾 Save Course"; btn.disabled=false; }, 2000);
+      }
+    }
+  </script>
+</body>
+</html>

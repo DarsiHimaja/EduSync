@@ -1,0 +1,60 @@
+You are an expert academic curriculum designer. Generate a detailed 16-week plan for ONE semester.
+
+Subject         : {subject}
+Level           : {level}
+Industry Focus  : {industry_focus}
+Weekly Hours    : {weekly_hours} hours per week
+Semester Number : {semester}
+Semester Title  : {sem_title}
+Semester Focus  : {sem_focus}
+Learning Outcomes covered: {sem_los}
+
+Return ONLY a valid JSON object, no extra text:
+{{
+  "weekly_plan": [
+    {{
+      "week": 1,
+      "topic": "Topic Title",
+      "subtopics": ["subtopic1", "subtopic2", "subtopic3"],
+      "teaching_method": "Lecture|Lab|Workshop|Seminar|Project",
+      "hours": {weekly_hours},
+      "activities": "Brief description of class activities",
+      "assessment": "Quiz|Assignment|Lab|Project|None"
+    }}
+  ],
+  "semester_assessments": {{
+    "assignments": [
+      {{"title": "...", "week_due": 4, "description": "...", "marks": 10}},
+      {{"title": "...", "week_due": 10, "description": "...", "marks": 10}},
+      {{"title": "...", "week_due": 15, "description": "...", "marks": 10}}
+    ],
+    "quizzes": [
+      {{"title": "...", "week": 3,  "topics": "...", "marks": 5}},
+      {{"title": "...", "week": 7,  "topics": "...", "marks": 5}},
+      {{"title": "...", "week": 12, "topics": "...", "marks": 5}}
+    ],
+    "projects": [
+      {{"title": "...", "type": "Group", "description": "...", "marks": 20, "deliverables": ["report", "demo"]}},
+      {{"title": "...", "type": "Individual", "description": "...", "marks": 15, "deliverables": ["code", "writeup"]}}
+    ],
+    "lab_exercises": [
+      {{"title": "...", "week": 2,  "description": "...", "tools": ["tool1"]}},
+      {{"title": "...", "week": 5,  "description": "...", "tools": ["tool1"]}},
+      {{"title": "...", "week": 9,  "description": "...", "tools": ["tool1", "tool2"]}},
+      {{"title": "...", "week": 13, "description": "...", "tools": ["tool2"]}}
+    ]
+  }},
+  "mark_distribution": {{
+    "assignments": 20,
+    "quizzes": 15,
+    "midterm": 25,
+    "project": 30,
+    "lab": 10
+  }}
+}}
+
+Rules:
+- weekly_plan must have exactly 16 entries (week 1 through 16)
+- Topics must progressively build on each other following the semester focus: {sem_focus}
+- Every week's hours must equal {weekly_hours}
+- Only return valid JSON, no extra text.

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduSync — Course View</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <style>
+    .tabs { display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:1.5rem; border-bottom:1px solid var(--border); }
+    .tab-btn { padding:0.55rem 1.1rem; border:none; background:transparent; color:var(--muted); font-size:0.88rem; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all 0.2s; white-space:nowrap; }
+    .tab-btn:hover { color:var(--text); }
+    .tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    .course-banner { background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(0,212,170,0.08)); border:1px solid var(--border); border-radius:var(--radius); padding:2rem; margin-bottom:2rem; }
+    .course-banner h2 { font-size:1.7rem; margin-bottom:0.5rem; }
+    .meta-pill { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:0.3rem 0.9rem; font-size:0.82rem; color:var(--muted); }
+    .meta-pill span { color:var(--text); font-weight:600; }
+    .week-card { background:var(--card2); border:1px solid var(--border); border-radius:var(--radius); padding:1.3rem 1.5rem; margin-bottom:1rem; }
+    .week-card .week-header { display:flex; gap:1rem; align-items:center; margin-bottom:0.8rem; }
+    .week-num { background:var(--primary); color:#fff; border-radius:8px; padding:0.25rem 0.7rem; font-size:0.8rem; font-weight:700; white-space:nowrap; }
+    .week-card h4 { font-size:1rem; font-weight:700; color:var(--text); margin:0; }
+    .week-two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+    .week-col-title { font-size:0.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:0.4rem; }
+    .week-two-col ul { padding-left:1.1rem; margin:0; }
+    .week-two-col li { font-size:0.85rem; color:var(--muted); line-height:1.7; }
+    .week-quiz-area { margin-top:1rem; border-top:1px solid var(--border); padding-top:1rem; }
+    .week-quiz-area .wq-mcq { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:1rem 1.2rem; margin-bottom:0.75rem; }
+    .week-quiz-area .wq-mcq .q-num { font-size:0.72rem; color:var(--muted); font-weight:600; margin-bottom:0.3rem; }
+    .week-quiz-area .wq-mcq .q-text { font-size:0.9rem; font-weight:600; color:var(--text); margin-bottom:0.7rem; }
+    .week-quiz-area .wq-submit { margin-top:0.75rem; }
+    .week-quiz-score { display:flex; align-items:center; gap:1rem; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:1rem 1.2rem; margin-bottom:0.75rem; }
+    .topic-category { margin-bottom:1.5rem; }
+    .topic-category h4 { font-size:0.95rem; font-weight:700; color:var(--primary); margin-bottom:0.7rem; }
+    .topics-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:0.7rem; }
+    .topic-chip { background:var(--card2); border:1px solid var(--border); border-radius:var(--radius); padding:0.8rem 1rem; }
+    .topic-chip strong { display:block; font-size:0.87rem; color:var(--text); margin-bottom:0.2rem; }
+    .topic-chip span { font-size:0.78rem; color:var(--muted); line-height:1.4; }
+    .resource-card { background:var(--card2); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.2rem; display:flex; flex-direction:column; gap:0.45rem; }
+    .resource-card a { color:var(--text); font-weight:600; font-size:0.9rem; text-decoration:none; }
+    .resource-card a:hover { color:var(--accent); text-decoration:underline; }
+    .resource-card p { color:var(--muted); font-size:0.8rem; line-height:1.4; margin:0; }
+    .mcq-card { background:var(--card2); border:1px solid var(--border); border-radius:var(--radius); padding:1.3rem 1.5rem; margin-bottom:1rem; }
+    .q-num { font-size:0.75rem; color:var(--muted); font-weight:600; margin-bottom:0.4rem; }
+    .q-text { font-size:0.95rem; font-weight:600; color:var(--text); margin-bottom:0.9rem; }
+    .mcq-options { display:flex; flex-direction:column; gap:0.45rem; }
+    .mcq-option { display:flex; align-items:center; gap:0.8rem; padding:0.6rem 0.9rem; border:1.5px solid var(--border); border-radius:10px; cursor:pointer; transition:all 0.15s; font-size:0.88rem; color:var(--muted); }
+    .mcq-option:hover { border-color:var(--primary); color:var(--text); }
+    .mcq-option.correct { border-color:var(--accent); background:rgba(0,212,170,0.08); color:var(--accent); font-weight:600; }
+    .mcq-option.wrong { border-color:#e05d44; background:rgba(224,93,68,0.08); color:#e05d44; }
+    .opt-letter { width:24px; height:24px; border-radius:50%; background:var(--border); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; flex-shrink:0; }
+    .mcq-explanation { display:none; margin-top:0.8rem; padding:0.7rem 1rem; background:rgba(108,99,255,0.07); border-left:3px solid var(--primary); border-radius:0 8px 8px 0; font-size:0.83rem; color:var(--muted); line-height:1.5; }
+    .mcq-score-bar { display:flex; gap:1.5rem; align-items:center; background:var(--card2); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; margin-bottom:1.5rem; }
+    .score-circle { width:72px; height:72px; border-radius:50%; background:conic-gradient(var(--primary) var(--pct), var(--border) 0); display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:800; color:var(--primary); flex-shrink:0; }
+    @media(max-width:600px){ .week-two-col { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="gen-wrap">
+    <div id="not-found" style="display:none" class="card text-center p-5">
+      <div style="font-size:3rem;margin-bottom:1rem">⚠️</div>
+      <p style="color:var(--muted);margin-bottom:1rem">Course not found.</p>
+      <a href="/static/dashboard.html" class="btn btn-primary">← Back to Dashboard</a>
+    </div>
+
+    <div id="course-content" style="display:none">
+
+      <div style="margin-bottom:1.5rem">
+        <a href="/static/dashboard.html" style="color:var(--muted);font-size:0.88rem;text-decoration:none">← Back to Dashboard</a>
+      </div>
+
+      <!-- Banner -->
+      <div class="course-banner">
+        <h2 id="r-title"></h2>
+        <p id="r-desc" style="margin-bottom:1rem;color:var(--muted)"></p>
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1.2rem" id="r-meta"></div>
+        <button class="btn btn-outline btn-sm" id="pdf-btn" onclick="handleDownloadPDF()">⬇️ Download PDF</button>
+      </div>
+
+      <!-- Outcomes -->
+      <div class="card" style="margin-bottom:2rem">
+        <p style="font-size:1rem;font-weight:700;margin-bottom:1rem">🎯 Learning Outcomes</p>
+        <ul class="outcome-list" id="r-outcomes"></ul>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('topics',this)">📚 All Topics</button>
+        <button class="tab-btn" onclick="switchTab('weekly',this)">🗓 Weekly Plan</button>
+        <button class="tab-btn" onclick="switchTab('resources',this)">🔗 Resources</button>
+        <button class="tab-btn" onclick="switchTab('assessment',this)">📝 Assessment</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-topics"><div id="topics-container"></div></div>
+      <div class="tab-panel" id="tab-weekly"><div id="weekly-plan"></div></div>
+      <div class="tab-panel" id="tab-resources"><div class="grid-3" id="resources-grid"></div></div>
+      <div class="tab-panel" id="tab-assessment">
+        <div id="mcq-score-area"></div>
+        <div id="mcq-container"></div>
+        <div id="mcq-submit-wrap" style="margin-top:1.5rem;display:none">
+          <button class="btn btn-primary" onclick="submitMCQ()">Submit Answers</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>© 2024 EduSync</footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    requireAuth();
+    buildSidebar("Dashboard");
+
+    const courseId = sessionStorage.getItem("view_course_id");
+    let _courseData = null;
+    let _courseReq  = null;
+    let _mcqAnswers = {};
+
+    async function loadCourse() {
+      if (!courseId) { document.getElementById("not-found").style.display = "block"; return; }
+      try {
+        const row   = await dbGetCourse(courseId);
+        _courseData = row.full_data || {};
+        _courseReq  = {
+          topic:      (row.meta && row.meta.topic)      || row.subject || "",
+          level:      (row.meta && row.meta.level)      || row.level   || "",
+          totalWeeks: (row.meta && row.meta.totalWeeks) || 0,
+          goal:       (row.meta && row.meta.goal)       || "",
+          weeksDone:  (row.meta && row.meta.weeksDone)  || 0
+        };
+        document.getElementById("course-content").style.display = "block";
+        document.title = "EduSync — " + (_courseData.course_title || row.title);
+        render(_courseData, _courseReq);
+      } catch(err) {
+        document.getElementById("not-found").style.display = "block";
+      }
+    }
+
+    loadCourse();
+
+    function switchTab(name, btn) {
+      document.querySelectorAll(".tabs .tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + name).classList.add("active");
+    }
+
+    function render(d, req) {
+      document.getElementById("r-title").textContent = d.course_title || "";
+      document.getElementById("r-desc").textContent  = d.description  || "";
+      document.getElementById("r-meta").innerHTML = [
+        ["Topic",    req.topic],
+        ["Level",    req.level],
+        ["Duration", req.totalWeeks ? req.totalWeeks + " weeks" : null],
+        ["Goal",     req.goal],
+      ].filter(([,v]) => v).map(([k,v]) => `<div class="meta-pill">${k}: <span>${v}</span></div>`).join("");
+
+      // Learning Outcomes
+      document.getElementById("r-outcomes").innerHTML = (d.learning_outcomes || [])
+        .map(o => `<li>${o}</li>`).join("");
+
+      // All Topics
+      const tc = document.getElementById("topics-container");
+      tc.innerHTML = (d.all_topics && d.all_topics.length)
+        ? d.all_topics.map(cat => `
+            <div class="topic-category">
+              <h4>${cat.category}</h4>
+              <div class="topics-grid">
+                ${cat.topics.map(t => `
+                  <div class="topic-chip">
+                    <strong>${t.name}</strong>
+                    <span>${t.description}</span>
+                  </div>`).join("")}
+              </div>
+            </div>`).join("")
+        : `<p style="color:var(--muted)">No topic data available.</p>`;
+
+      // Weekly Plan
+      document.getElementById("weekly-plan").innerHTML = (d.weekly_plan || []).map(w => `
+        <div class="week-card" id="wcard-${w.week}">
+          <div class="week-header">
+            <span class="week-num">Week ${w.week}</span>
+            <h4 style="flex:1">${w.title}</h4>
+            <button class="btn btn-outline btn-sm" onclick="generateWeekQuiz(${w.week},'${w.title.replace(/'/g,"\\'").replace(/"/g,"&quot;")}',${JSON.stringify(w.topics || []).replace(/"/g,'&quot;')})" id="qbtn-${w.week}">🧠 Generate Quiz</button>
+          </div>
+          <div class="week-two-col">
+            <div>
+              <div class="week-col-title">📖 Topics Covered</div>
+              <ul>${(w.topics || []).map(t => `<li>${t}</li>`).join("")}</ul>
+            </div>
+            <div>
+              <div class="week-col-title">⚡ Activities</div>
+              <ul>${(w.activities || []).map(a => `<li>${a}</li>`).join("")}</ul>
+            </div>
+          </div>
+          <div class="week-quiz-area" id="wquiz-${w.week}" style="display:none"></div>
+        </div>`).join("");
+
+      // Resources
+      document.getElementById("resources-grid").innerHTML = (d.resources || []).map(r => `
+        <div class="resource-card">
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:0.4rem">
+            <span class="badge badge-purple">${r.type}</span>
+            <div style="display:flex;gap:0.4rem;align-items:center">
+              ${r.platform ? `<span style="font-size:0.71rem;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:0.1rem 0.5rem">${r.platform}</span>` : ""}
+              <span style="font-size:0.71rem;border-radius:20px;padding:0.1rem 0.5rem;${r.free ? 'color:var(--accent);background:rgba(0,212,170,0.1)' : 'color:#f0a500;background:rgba(240,165,0,0.1)'}">${r.free ? "Free" : "Paid"}</span>
+            </div>
+          </div>
+          <a href="${r.url}" target="_blank" rel="noopener noreferrer">${r.title}</a>
+          <p>${r.description}</p>
+        </div>`).join("");
+
+      // MCQ
+      renderMCQ(d.assessments || []);
+    }
+
+    function renderMCQ(questions) {
+      _mcqAnswers = {};
+      document.getElementById("mcq-score-area").innerHTML = "";
+      const letters = ["A","B","C","D"];
+      if (!questions.length) {
+        document.getElementById("mcq-container").innerHTML = `<p style="color:var(--muted)">No assessments available.</p>`;
+        return;
+      }
+      document.getElementById("mcq-container").innerHTML = questions.map((q, qi) => `
+        <div class="mcq-card" id="mcq-${qi}">
+          <div class="q-num">Question ${qi+1} of ${questions.length}</div>
+          <div class="q-text">${q.question}</div>
+          <div class="mcq-options">
+            ${q.options.map((opt, oi) => `
+              <div class="mcq-option" onclick="selectOption(${qi},${oi},${q.answer})">
+                <span class="opt-letter">${letters[oi]}</span>
+                <span>${opt}</span>
+              </div>`).join("")}
+          </div>
+          <div class="mcq-explanation" id="exp-${qi}">${q.explanation}</div>
+        </div>`).join("");
+      document.getElementById("mcq-submit-wrap").style.display = "block";
+    }
+
+    function selectOption(qi, oi, correct) {
+      const card = document.getElementById(`mcq-${qi}`);
+      if (card.dataset.answered) return;
+      card.dataset.answered = "true";
+      _mcqAnswers[qi] = oi;
+      const opts = card.querySelectorAll(".mcq-option");
+      opts[oi].classList.add(oi === correct ? "correct" : "wrong");
+      if (oi !== correct) opts[correct].classList.add("correct");
+      document.getElementById(`exp-${qi}`).style.display = "block";
+    }
+
+    function submitMCQ() {
+      const questions = _courseData.assessments || [];
+      let score = 0;
+      questions.forEach((q, qi) => {
+        const card = document.getElementById(`mcq-${qi}`);
+        if (!card.dataset.answered) {
+          card.querySelectorAll(".mcq-option")[q.answer].classList.add("correct");
+          document.getElementById(`exp-${qi}`).style.display = "block";
+          card.dataset.answered = "true";
+        }
+        if (_mcqAnswers[qi] === q.answer) score++;
+      });
+      const pct   = Math.round((score / questions.length) * 100);
+      const emoji = pct >= 80 ? "🎉" : pct >= 50 ? "👍" : "📚";
+      document.getElementById("mcq-score-area").innerHTML = `
+        <div class="mcq-score-bar">
+          <div class="score-circle" style="--pct:${pct*3.6}deg">${pct}%</div>
+          <div>
+            <div style="font-size:1.2rem;font-weight:700;margin-bottom:0.3rem">${emoji} You scored ${score} / ${questions.length}</div>
+            <div style="color:var(--muted);font-size:0.88rem">${pct>=80?"Excellent! You have a strong grasp of this topic.":pct>=50?"Good effort! Review the explanations above.":"Keep studying — review the weekly plan and resources."}</div>
+          </div>
+        </div>`;
+      document.getElementById("mcq-submit-wrap").style.display = "none";
+      document.getElementById("mcq-score-area").scrollIntoView({ behavior:"smooth" });
+    }
+
+    async function generateWeekQuiz(weekNum, title, topicsJson) {
+      const btn      = document.getElementById(`qbtn-${weekNum}`);
+      const quizArea = document.getElementById(`wquiz-${weekNum}`);
+      const topics   = typeof topicsJson === 'string' ? JSON.parse(topicsJson.replace(/&quot;/g,'"')) : topicsJson;
+
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      quizArea.style.display = 'block';
+      quizArea.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">⏳ Generating quiz...</p>';
+
+      try {
+        const qs = await apiFetch('/quiz/generate', {
+          method: 'POST',
+          body: JSON.stringify({ week: weekNum, title, topics, level: _courseReq.level || 'Intermediate' })
+        });
+        renderWeekQuiz(weekNum, qs);
+        btn.textContent = '🔄 Regenerate Quiz';
+      } catch(err) {
+        quizArea.innerHTML = `<p style="color:var(--danger);font-size:0.85rem">❌ ${err.message}</p>`;
+        btn.textContent = '🧠 Generate Quiz';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function renderWeekQuiz(weekNum, questions) {
+      const letters = ['A','B','C','D'];
+      const answers = {};
+      const area = document.getElementById(`wquiz-${weekNum}`);
+      area.innerHTML = `
+        <p style="font-size:0.85rem;font-weight:700;color:var(--primary);margin-bottom:0.8rem">🧠 Week ${weekNum} Quiz</p>
+        ${questions.map((q, qi) => `
+          <div class="wq-mcq" id="wq-${weekNum}-${qi}">
+            <div class="q-num">Question ${qi+1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="mcq-options">
+              ${q.options.map((opt, oi) => `
+                <div class="mcq-option" onclick="selectWQ(${weekNum},${qi},${oi},${q.answer})">
+                  <span class="opt-letter">${letters[oi]}</span>
+                  <span>${opt}</span>
+                </div>`).join('')}
+            </div>
+            <div class="mcq-explanation" id="wqexp-${weekNum}-${qi}">${q.explanation}</div>
+          </div>`).join('')}
+        <div class="wq-submit">
+          <button class="btn btn-primary btn-sm" onclick="submitWeekQuiz(${weekNum},${JSON.stringify(questions).replace(/"/g,'&quot;')})">✅ Submit Quiz</button>
+        </div>
+        <div id="wqscore-${weekNum}"></div>`;
+    }
+
+    function selectWQ(weekNum, qi, oi, correct) {
+      const card = document.getElementById(`wq-${weekNum}-${qi}`);
+      if (card.dataset.answered) return;
+      card.dataset.answered = 'true';
+      const opts = card.querySelectorAll('.mcq-option');
+      opts[oi].classList.add(oi === correct ? 'correct' : 'wrong');
+      if (oi !== correct) opts[correct].classList.add('correct');
+      document.getElementById(`wqexp-${weekNum}-${qi}`).style.display = 'block';
+      card.dataset.selected = oi;
+    }
+
+    function submitWeekQuiz(weekNum, questionsJson) {
+      const questions = typeof questionsJson === 'string' ? JSON.parse(questionsJson.replace(/&quot;/g,'"')) : questionsJson;
+      let score = 0;
+      questions.forEach((q, qi) => {
+        const card = document.getElementById(`wq-${weekNum}-${qi}`);
+        if (!card.dataset.answered) {
+          card.querySelectorAll('.mcq-option')[q.answer].classList.add('correct');
+          document.getElementById(`wqexp-${weekNum}-${qi}`).style.display = 'block';
+          card.dataset.answered = 'true';
+        }
+        if (parseInt(card.dataset.selected) === q.answer) score++;
+      });
+      const pct   = Math.round((score / questions.length) * 100);
+      const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '📚';
+      document.getElementById(`wqscore-${weekNum}`).innerHTML = `
+        <div class="week-quiz-score">
+          <div style="font-size:1.6rem;font-weight:800;color:var(--primary)">${pct}%</div>
+          <div>
+            <div style="font-weight:700">${emoji} ${score} / ${questions.length} correct</div>
+            <div style="font-size:0.82rem;color:var(--muted)">${pct>=80?'Excellent work!':pct>=50?'Good effort — review the explanations.':'Keep studying and try again.'}</div>
+          </div>
+        </div>`;
+      document.querySelector(`#wquiz-${weekNum} .wq-submit`).style.display = 'none';
+    }
+
+    async function handleDownloadPDF() {
+      if (!_courseData || !_courseReq) return;
+      const btn = document.getElementById("pdf-btn");
+      btn.textContent = "Generating PDF..."; btn.disabled = true;
+      try {
+        const token = getToken();
+        const res = await fetch(API + "/download-pdf", {
+          method: "POST",
+          headers: { "Content-Type":"application/json", "Authorization":`Bearer ${token}` },
+          body: JSON.stringify({
+            curriculum: _courseData,
+            topic:      _courseReq.topic     || "",
+            level:      _courseReq.level     || "",
+            duration:   _courseReq.totalWeeks || 0,
+            goal:       _courseReq.goal      || ""
+          })
+        });
+        if (!res.ok) throw new Error("PDF generation failed");
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href = url;
+        a.download = `EduSync_${(_courseReq.topic||"Course").replace(/\s+/g,"_")}_Curriculum.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch(err) {
+        alert("PDF download failed: " + err.message);
+      } finally {
+        btn.textContent = "⬇️ Download PDF"; btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

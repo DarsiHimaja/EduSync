@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduSync — Contact</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="contact-wrap">
+    <p class="section-title">Get In <span>Touch</span></p>
+    <p style="color:var(--muted);margin-bottom:2rem">Have a question, feedback, or want to collaborate? We'd love to hear from you.</p>
+
+    <div id="contact-alert" class="alert"></div>
+
+    <div class="card">
+      <form id="contact-form">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" name="name" placeholder="Your full name" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Subject</label>
+          <input type="text" name="subject" placeholder="What is this about?" required />
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea name="message" rows="5" placeholder="Write your message here..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Send Message</button>
+      </form>
+    </div>
+
+    <!-- Info cards -->
+    <div class="grid-3" style="margin-top:2.5rem">
+      <div class="card" style="text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:0.5rem">📧</div>
+        <h4>Email</h4>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.3rem">support@edusync.ai</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:0.5rem">🐙</div>
+        <h4>GitHub</h4>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.3rem">github.com/edusync</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:0.5rem">💬</div>
+        <h4>Discord</h4>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.3rem">discord.gg/edusync</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2024 EduSync — AI-Powered Curriculum Design</footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    requireAuth();
+    buildSidebar("Contact");
+
+    document.getElementById("contact-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById("contact-alert");
+      alertEl.className = "alert alert-success";
+      alertEl.textContent = "✅ Message sent! We'll get back to you soon.";
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>

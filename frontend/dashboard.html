@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduSync — Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="dash-wrap">
+    <p class="section-title" style="margin-bottom:1.5rem">My <span>Dashboard</span></p>
+
+    <!-- Stats -->
+    <div class="stats-row" id="stats-row"></div>
+
+    <!-- Overall progress -->
+    <div class="card" style="margin-bottom:2rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem">
+        <span style="font-weight:700">Overall Progress</span>
+        <span id="overall-pct" style="color:var(--primary);font-weight:700">0%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="overall-bar" style="width:0%"></div></div>
+    </div>
+
+    <!-- Courses list -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <p style="font-size:1.1rem;font-weight:700">My Courses</p>
+      <a href="/static/generate.html" class="btn btn-primary btn-sm">+ Generate New</a>
+    </div>
+
+    <div id="courses-list"></div>
+  </div>
+
+  <footer>© 2024 EduSync</footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    requireAuth();
+    buildSidebar("Dashboard");
+    renderDashboard();
+
+    async function renderDashboard() {
+      let courses = [];
+      try {
+        courses = await dbGetCourses();
+      } catch (err) {
+        document.getElementById("courses-list").innerHTML = `<p style="color:var(--danger)">Failed to load courses: ${err.message}</p>`;
+        return;
+      }
+
+      courses.forEach(c => {
+        c.topic      = (c.meta && c.meta.topic)      || c.subject || "";
+        c.totalWeeks = (c.meta && c.meta.totalWeeks) || 1;
+        c.weeksDone  = (c.meta && c.meta.weeksDone)  || 0;
+      });
+
+      const total  = courses.length;
+      const done   = courses.filter(c => c.weeksDone >= c.totalWeeks).length;
+      const inProg = courses.filter(c => c.weeksDone > 0 && c.weeksDone < c.totalWeeks).length;
+      const avgPct = total ? Math.round(courses.reduce((s,c) => s + (c.weeksDone/c.totalWeeks)*100, 0) / total) : 0;
+
+      document.getElementById("stats-row").innerHTML = `
+        <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-label">Courses Enrolled</div></div>
+        <div class="stat-card"><div class="stat-val">${done}</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card"><div class="stat-val">${inProg}</div><div class="stat-label">In Progress</div></div>
+        <div class="stat-card"><div class="stat-val">${avgPct}%</div><div class="stat-label">Avg. Progress</div></div>`;
+
+      document.getElementById("overall-pct").textContent = avgPct + "%";
+      document.getElementById("overall-bar").style.width  = avgPct + "%";
+
+      const list = document.getElementById("courses-list");
+      if (!total) {
+        list.innerHTML = `
+          <div class="card" style="text-align:center;padding:3rem">
+            <div style="font-size:3rem;margin-bottom:1rem">📭</div>
+            <p style="color:var(--muted)">No courses yet. Generate one and save it to track your progress.</p>
+            <a href="/static/generate.html" class="btn btn-primary" style="margin-top:1rem;display:inline-block">Generate Curriculum</a>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = courses.map(c => {
+        const pct   = Math.min(100, Math.round((c.weeksDone / c.totalWeeks) * 100));
+        const badge = pct >= 100 ? "badge-green" : pct > 0 ? "badge-purple" : "badge-red";
+        const label = pct >= 100 ? "Completed" : pct > 0 ? "In Progress" : "Not Started";
+        return `
+          <div class="course-row">
+            <div class="course-row-info" style="cursor:pointer" onclick="viewCourse('${c.course_id}')">
+              <h4 style="color:var(--primary)">${c.title}</h4>
+              <p>${c.topic} • ${c.level} • ${c.totalWeeks} weeks</p>
+            </div>
+            <div class="course-row-progress">
+              <label><span>Week ${c.weeksDone} / ${c.totalWeeks}</span><span>${pct}%</span></label>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.6rem">
+              <span class="badge ${badge}">${label}</span>
+            </div>
+            <div class="course-row-actions">
+              <button class="btn btn-primary btn-sm" onclick="viewCourse('${c.course_id}')">👁 View</button>
+              <button class="btn btn-outline btn-sm" onclick="markWeek('${c.course_id}', ${c.weeksDone}, ${c.totalWeeks}, 1)">+1 Week</button>
+              <button class="btn btn-sm" style="border:1px solid var(--border);color:var(--muted);background:transparent" onclick="markWeek('${c.course_id}', ${c.weeksDone}, ${c.totalWeeks}, -1)">−</button>
+              <button class="btn btn-danger btn-sm" onclick="removeCourse('${c.course_id}')">✕</button>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    async function markWeek(courseId, current, total, delta) {
+      const newVal = Math.max(0, Math.min(total, current + delta));
+      try {
+        const course = await dbGetCourse(courseId);
+        course.meta.weeksDone = newVal;
+        await dbSaveCourse({
+          course_id: courseId,
+          title:     course.title,
+          subject:   course.subject,
+          level:     course.level,
+          role_type: course.role_type,
+          meta:      course.meta,
+          full_data: course.full_data
+        });
+        renderDashboard();
+      } catch (err) {
+        alert("Failed to update progress: " + err.message);
+      }
+    }
+
+    async function removeCourse(courseId) {
+      try {
+        await dbDeleteCourse(courseId);
+        renderDashboard();
+      } catch (err) {
+        alert("Failed to remove course: " + err.message);
+      }
+    }
+
+    function viewCourse(courseId) {
+      sessionStorage.setItem("view_course_id", courseId);
+      window.location.href = "/static/student_course_view.html";
+    }
+  </script>
+</body>
+</html>

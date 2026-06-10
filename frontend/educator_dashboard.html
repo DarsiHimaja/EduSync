@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduSync — My Courses</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <style>
+    .course-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.6rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+    .course-card:hover { border-color: var(--primary); box-shadow: 0 4px 20px rgba(108,99,255,0.15); }
+    .course-icon { width:48px; height:48px; background:linear-gradient(135deg,var(--primary),var(--accent)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; }
+    .course-info { flex:1; min-width:180px; }
+    .course-info h4 { font-size:1rem; font-weight:700; margin-bottom:0.3rem; color:var(--text); }
+    .course-info p  { font-size:0.82rem; color:var(--muted); }
+    .course-arrow { color:var(--primary); font-size:1.2rem; flex-shrink:0; }
+  </style>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="dash-wrap">
+    <p class="section-title" style="margin-bottom:1.5rem">My <span>Courses</span></p>
+    <div class="stats-row" id="stats-row"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <p style="font-size:1rem;font-weight:700">Saved Curricula</p>
+      <a href="/static/educator_generate.html" class="btn btn-primary btn-sm">+ New Curriculum</a>
+    </div>
+
+    <div class="loader" id="loader" style="display:block">
+      <div class="spinner"></div>
+      <p>Loading your courses...</p>
+    </div>
+
+    <div id="courses-list"></div>
+  </div>
+
+  <footer>© 2024 EduSync</footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    requireAuth();
+    buildSidebar("My Courses");
+
+    const emojis = ["🤖","🌐","📊","🔒","💡","🏥","💰","🎓","⚙️","🎨"];
+
+    async function render() {
+      const loader = document.getElementById("loader");
+      const list   = document.getElementById("courses-list");
+      try {
+        const courses = await dbGetCourses();
+        loader.style.display = "none";
+
+        // Only show educator courses
+        const eduCourses = courses.filter(c => c.role_type === "educator");
+        const total      = eduCourses.length;
+        const industries = [...new Set(eduCourses.map(c => c.meta?.industry_focus).filter(Boolean))].length;
+        const totalSems  = eduCourses.reduce((s,c) => s + (c.meta?.semesters || 0), 0);
+
+        document.getElementById("stats-row").innerHTML = `
+          <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-label">Courses Saved</div></div>
+          <div class="stat-card"><div class="stat-val">${totalSems}</div><div class="stat-label">Total Semesters</div></div>
+          <div class="stat-card"><div class="stat-val">${industries}</div><div class="stat-label">Industries Covered</div></div>`;
+
+        if (!total) {
+          list.innerHTML = `
+            <div class="card" style="text-align:center;padding:3rem">
+              <div style="font-size:3rem;margin-bottom:1rem">📭</div>
+              <p style="color:var(--muted)">No curricula saved yet. Generate one and click Save Course.</p>
+              <a href="/static/educator_generate.html" class="btn btn-primary" style="margin-top:1rem;display:inline-block">Generate Curriculum</a>
+            </div>`;
+          return;
+        }
+
+        list.innerHTML = eduCourses.map((c, i) => `
+          <div class="course-card" onclick="openCourse('${c.course_id}')">
+            <div class="course-icon">${emojis[i % emojis.length]}</div>
+            <div class="course-info">
+              <h4>${c.title}</h4>
+              <p>${c.subject} &nbsp;·&nbsp; ${c.level} &nbsp;·&nbsp; ${c.meta?.semesters || "—"} semester(s) &nbsp;·&nbsp; ${c.meta?.weekly_hours || "—"} hrs/week</p>
+              <p style="margin-top:0.25rem">🏭 ${c.meta?.industry_focus || "—"} &nbsp;&nbsp; 📅 ${new Date(c.saved_at).toLocaleDateString()}</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.8rem;flex-shrink:0">
+              <span class="badge badge-green">Saved</span>
+              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();removeCourse('${c.course_id}')">✕</button>
+              <span class="course-arrow">→</span>
+            </div>
+          </div>`).join("");
+
+      } catch(err) {
+        loader.style.display = "none";
+        list.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+      }
+    }
+
+    function openCourse(courseId) {
+      sessionStorage.setItem("view_course_id", courseId);
+      window.location.href = "/static/course_view.html";
+    }
+
+    async function removeCourse(courseId) {
+      if (!confirm("Remove this course?")) return;
+      try {
+        await dbDeleteCourse(courseId);
+        render();
+      } catch(err) {
+        alert("Could not remove: " + err.message);
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>

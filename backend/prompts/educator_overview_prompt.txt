@@ -1,0 +1,124 @@
+You are an expert academic curriculum designer. Design a complete multi-semester course overview for an educator.
+
+Skill/Subject   : {subject}
+Education Level : {level}
+Number of Semesters: {semesters}
+Weekly Hours    : {weekly_hours} hours per week
+Industry Focus  : {industry_focus}
+
+Return ONLY a valid JSON object, no extra text:
+{{
+  "course_title": "...",
+  "course_code": "CS101",
+  "level": "{level}",
+  "total_semesters": {semesters},
+  "weekly_hours": {weekly_hours},
+  "industry_focus": "{industry_focus}",
+  "description": "2-3 sentence course description",
+  "prerequisites": ["prereq1", "prereq2", "prereq3"],
+  "industry_relevance": "2 sentences on how this aligns with {industry_focus} industry",
+  "learning_outcomes": [
+    {{"id": "LO1", "outcome": "...", "bloom_level": "Remember"}},
+    {{"id": "LO2", "outcome": "...", "bloom_level": "Understand"}},
+    {{"id": "LO3", "outcome": "...", "bloom_level": "Apply"}},
+    {{"id": "LO4", "outcome": "...", "bloom_level": "Analyze"}},
+    {{"id": "LO5", "outcome": "...", "bloom_level": "Evaluate"}},
+    {{"id": "LO6", "outcome": "...", "bloom_level": "Create"}}
+  ],
+  "semesters": [
+    {{
+      "semester": 1,
+      "title": "Semester 1 title",
+      "focus": "What this semester focuses on in 1 sentence",
+      "credits": 4,
+      "learning_outcomes": ["LO1", "LO2"]
+    }}
+  ],
+  "outcome_topic_mapping": [
+    {{
+      "outcome_id": "LO1",
+      "outcome_text": "...",
+      "bloom_level": "Remember",
+      "mapped_semesters": [1],
+      "mapped_topics": ["topic1", "topic2"],
+      "assessment_types": ["Quiz", "Assignment"]
+    }}
+  ],
+  "resources": [
+    {{
+      "title": "...",
+      "type": "video|course|textbook|article|tool",
+      "url": "https://www.youtube.com/results?search_query={subject}+tutorial",
+      "platform": "YouTube",
+      "free": true,
+      "description": "..."
+    }},
+    {{
+      "title": "...",
+      "type": "course",
+      "url": "https://www.coursera.org/search?query={subject}",
+      "platform": "Coursera",
+      "free": false,
+      "description": "..."
+    }},
+    {{
+      "title": "...",
+      "type": "course",
+      "url": "https://www.edx.org/search?q={subject}",
+      "platform": "edX",
+      "free": true,
+      "description": "..."
+    }},
+    {{
+      "title": "...",
+      "type": "article",
+      "url": "https://www.freecodecamp.org/news/search/?query={subject}",
+      "platform": "freeCodeCamp",
+      "free": true,
+      "description": "..."
+    }},
+    {{
+      "title": "...",
+      "type": "article",
+      "url": "https://www.geeksforgeeks.org/",
+      "platform": "GeeksforGeeks",
+      "free": true,
+      "description": "..."
+    }},
+    {{
+      "title": "...",
+      "type": "textbook",
+      "url": "https://www.amazon.com/s?k={subject}+textbook",
+      "platform": "Amazon",
+      "free": false,
+      "description": "..."
+    }},
+    {{
+      "title": "...",
+      "type": "tool",
+      "url": "https://github.com/topics/{subject}",
+      "platform": "GitHub",
+      "free": true,
+      "description": "..."
+    }},
+    {{
+      "title": "...",
+      "type": "video",
+      "url": "https://www.youtube.com/results?search_query={subject}+full+course",
+      "platform": "YouTube",
+      "free": true,
+      "description": "..."
+    }}
+  ],
+  "recommended_tools": ["tool1", "tool2", "tool3"],
+  "industry_projects": [
+    {{"title": "...", "description": "...", "skills_covered": ["skill1", "skill2"], "semester": 1}}
+  ]
+}}
+
+Rules:
+- Generate exactly {semesters} semester objects in the "semesters" array (semester 1 through {semesters})
+- Each semester needs only: semester number, title, focus, credits, learning_outcomes (no weekly_plan)
+- outcome_topic_mapping must cover all 6 LOs
+- industry_projects must have exactly {semesters} entries, one per semester
+- Only return valid JSON, no extra text.

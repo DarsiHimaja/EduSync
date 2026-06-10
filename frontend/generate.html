@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduSync — Generate Curriculum</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="gen-wrap">
+    <p class="section-title" style="margin-bottom:1.5rem">Generate <span>Curriculum</span></p>
+
+    <div class="card gen-form-card" style="margin-bottom:2.5rem">
+      <div id="gen-alert" class="alert"></div>
+      <form id="gen-form">
+        <div class="form-group">
+          <label>Topic / Subject</label>
+          <input type="text" name="topic" placeholder="e.g. Machine Learning, Web Development" required/>
+        </div>
+        <div class="form-group">
+          <label>Skill Level</label>
+          <select name="level">
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Duration (weeks)</label>
+          <input type="number" name="duration" min="1" max="52" value="8" required/>
+        </div>
+        <div class="form-group">
+          <label>Learning Goal</label>
+          <textarea name="goal" rows="3" placeholder="e.g. Build production-ready ML models and deploy them"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" id="gen-btn">✨ Generate Curriculum</button>
+      </form>
+    </div>
+
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <p>Generating your curriculum with AI...</p>
+    </div>
+
+    <div id="results" style="display:none">
+      <!-- Banner -->
+      <div class="course-banner">
+        <h2 id="course-title"></h2>
+        <p id="course-desc"></p>
+        <div class="course-meta" id="course-meta"></div>
+        <div style="margin-top:1rem;display:flex;gap:0.7rem;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveToDashboard()">💾 Save to Dashboard</button>
+          <button class="btn btn-outline btn-sm" id="pdf-btn" onclick="handleDownloadPDF()">⬇️ Download PDF</button>
+        </div>
+      </div>
+
+      <!-- Outcomes -->
+      <div class="card" style="margin-bottom:2rem">
+        <p style="font-size:1rem;font-weight:700;margin-bottom:1rem">🎯 Learning Outcomes</p>
+        <ul class="outcome-list" id="outcomes-list"></ul>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('topics',this)">📚 All Topics</button>
+        <button class="tab-btn" onclick="switchTab('weekly',this)">🗓 Weekly Plan</button>
+        <button class="tab-btn" onclick="switchTab('resources',this)">🔗 Resources</button>
+        <button class="tab-btn" onclick="switchTab('assessment',this)">📝 Assessment</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-topics">
+        <div id="topics-container"></div>
+      </div>
+
+      <div class="tab-panel" id="tab-weekly">
+        <div id="weekly-plan"></div>
+      </div>
+
+      <div class="tab-panel" id="tab-resources">
+        <div class="grid-3" id="resources-grid"></div>
+      </div>
+
+      <div class="tab-panel" id="tab-assessment">
+        <div id="mcq-score-area"></div>
+        <div id="mcq-container"></div>
+        <div id="mcq-submit-wrap" style="margin-top:1.5rem;display:none">
+          <button class="btn btn-primary" onclick="submitMCQ()">Submit Answers</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2024 EduSync</footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    requireAuth();
+    buildSidebar("Generate Curriculum");
+
+    let _currentData = null;
+    let _currentReq  = null;
+    let _mcqAnswers  = {};
+
+    function switchTab(name, btn) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + name).classList.add("active");
+    }
+
+    document.getElementById("gen-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById("gen-alert");
+      alertEl.textContent = ""; alertEl.className = "alert";
+      const form = e.target;
+      _currentReq = { topic: form.topic.value.trim(), level: form.level.value, duration: parseInt(form.duration.value), goal: form.goal.value.trim() };
+      document.getElementById("loader").style.display = "block";
+      document.getElementById("results").style.display = "none";
+      document.getElementById("gen-btn").disabled = true;
+      try {
+        _currentData = await apiFetch("/generate", { method: "POST", body: JSON.stringify(_currentReq) });
+        renderResults(_currentData, _currentReq);
+      } catch (err) {
+        alertEl.className = "alert alert-error";
+        alertEl.textContent = err.message;
+      } finally {
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("gen-btn").disabled = false;
+      }
+    });
+
+    function renderResults(d, req) {
+      document.getElementById("course-title").textContent = d.course_title;
+      document.getElementById("course-desc").textContent  = d.description;
+      document.getElementById("course-meta").innerHTML = `
+        <div class="meta-pill">Level: <span>${req.level}</span></div>
+        <div class="meta-pill">Duration: <span>${req.duration} weeks</span></div>
+        <div class="meta-pill">Topics: <span>${d.all_topics ? d.all_topics.reduce((s,c)=>s+c.topics.length,0) : "—"}</span></div>
+        <div class="meta-pill">Resources: <span>${d.resources.length}</span></div>`;
+
+      // Outcomes
+      document.getElementById("outcomes-list").innerHTML = d.learning_outcomes.map(o=>`<li>${o}</li>`).join("");
+
+      // All Topics
+      const tc = document.getElementById("topics-container");
+      tc.innerHTML = d.all_topics && d.all_topics.length
+        ? d.all_topics.map(cat=>`
+            <div class="topic-category">
+              <h4>${cat.category}</h4>
+              <div class="topics-grid">
+                ${cat.topics.map(t=>`
+                  <div class="topic-chip">
+                    <strong>${t.name}</strong>
+                    <span>${t.description}</span>
+                  </div>`).join("")}
+              </div>
+            </div>`).join("")
+        : `<p style="color:var(--muted)">No topic data returned.</p>`;
+
+      // Weekly Plan
+      document.getElementById("weekly-plan").innerHTML = d.weekly_plan.map(w=>`
+        <div class="week-card">
+          <div class="week-header">
+            <span class="week-num">Week ${w.week}</span>
+            <h4>${w.title}</h4>
+          </div>
+          <div class="week-two-col">
+            <div>
+              <div class="week-col-title">📖 Topics Covered</div>
+              <ul>${w.topics.map(t=>`<li>${t}</li>`).join("")}</ul>
+            </div>
+            <div>
+              <div class="week-col-title">⚡ Activities</div>
+              <ul>${w.activities.map(a=>`<li>${a}</li>`).join("")}</ul>
+            </div>
+          </div>
+        </div>`).join("");
+
+      // Resources — open link via search URL
+      document.getElementById("resources-grid").innerHTML = d.resources.map(r=>`
+        <div class="resource-card">
+          <div class="resource-top">
+            <span class="badge badge-purple">${r.type}</span>
+            <div style="display:flex;gap:0.4rem;align-items:center">
+              ${r.platform?`<span class="platform-tag">${r.platform}</span>`:""}
+              <span class="${r.free?'free-tag':'paid-tag'}">${r.free?"Free":"Paid"}</span>
+            </div>
+          </div>
+          <a href="${r.url}" target="_blank" rel="noopener noreferrer">${r.title}</a>
+          <p>${r.description}</p>
+        </div>`).join("");
+
+      // MCQ
+      renderMCQ(d.assessments || []);
+
+      document.getElementById("results").style.display = "block";
+      document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function renderMCQ(questions) {
+      _mcqAnswers = {};
+      document.getElementById("mcq-score-area").innerHTML = "";
+      const letters = ["A","B","C","D"];
+      if (!questions.length) {
+        document.getElementById("mcq-container").innerHTML = `<p style="color:var(--muted)">No assessments generated.</p>`;
+        return;
+      }
+      document.getElementById("mcq-container").innerHTML = questions.map((q, qi) => `
+        <div class="mcq-card" id="mcq-${qi}">
+          <div class="q-num">Question ${qi+1} of ${questions.length}</div>
+          <div class="q-text">${q.question}</div>
+          <div class="mcq-options">
+            ${q.options.map((opt, oi) => `
+              <div class="mcq-option" id="opt-${qi}-${oi}" onclick="selectOption(${qi},${oi},${q.answer})">
+                <span class="opt-letter">${letters[oi]}</span>
+                <span>${opt}</span>
+              </div>`).join("")}
+          </div>
+          <div class="mcq-explanation" id="exp-${qi}">${q.explanation}</div>
+        </div>`).join("");
+      document.getElementById("mcq-submit-wrap").style.display = "block";
+    }
+
+    function selectOption(qi, oi, correct) {
+      // Only allow selection if not yet answered
+      const card = document.getElementById(`mcq-${qi}`);
+      if (card.dataset.answered) return;
+      card.dataset.answered = "true";
+      _mcqAnswers[qi] = oi;
+      const opts = card.querySelectorAll(".mcq-option");
+      opts[oi].classList.add(oi === correct ? "correct" : "wrong");
+      if (oi !== correct) opts[correct].classList.add("correct");
+      document.getElementById(`exp-${qi}`).style.display = "block";
+    }
+
+    function submitMCQ() {
+      if (!_currentData) return;
+      const questions = _currentData.assessments || [];
+      let score = 0;
+      questions.forEach((q, qi) => {
+        const card = document.getElementById(`mcq-${qi}`);
+        if (!card.dataset.answered) {
+          // mark unanswered correct answer
+          card.querySelectorAll(".mcq-option")[q.answer].classList.add("correct");
+          document.getElementById(`exp-${qi}`).style.display = "block";
+          card.dataset.answered = "true";
+        }
+        if (_mcqAnswers[qi] === q.answer) score++;
+      });
+      const pct = Math.round((score / questions.length) * 100);
+      const emoji = pct >= 80 ? "🎉" : pct >= 50 ? "👍" : "📚";
+      document.getElementById("mcq-score-area").innerHTML = `
+        <div class="mcq-score-bar">
+          <div class="score-circle" style="--pct:${pct*3.6}deg">${pct}%</div>
+          <div>
+            <div style="font-size:1.2rem;font-weight:700;margin-bottom:0.3rem">${emoji} You scored ${score} / ${questions.length}</div>
+            <div style="color:var(--muted);font-size:0.88rem">${pct>=80?"Excellent! You have a strong grasp of this topic.":pct>=50?"Good effort! Review the explanations above.":"Keep studying — review the weekly plan and resources."}</div>
+          </div>
+        </div>`;
+      document.getElementById("mcq-submit-wrap").style.display = "none";
+      document.getElementById("mcq-score-area").scrollIntoView({ behavior: "smooth" });
+    }
+
+    async function handleDownloadPDF() {
+      if (!_currentData || !_currentReq) return;
+      const btn = document.getElementById("pdf-btn");
+      btn.textContent = "Generating PDF...";
+      btn.disabled = true;
+      try {
+        const token = getToken();
+        const res = await fetch(API + "/download-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({
+            curriculum: _currentData,
+            topic:      _currentReq.topic,
+            level:      _currentReq.level,
+            duration:   _currentReq.duration,
+            goal:       _currentReq.goal
+          })
+        });
+        if (!res.ok) throw new Error("PDF generation failed");
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href     = url;
+        a.download = `EduSync_${_currentReq.topic.replace(/\s+/g,"_")}_Curriculum.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert("PDF download failed: " + err.message);
+      } finally {
+        btn.textContent = "⬇️ Download PDF";
+        btn.disabled = false;
+      }
+    }
+
+    async function saveToDashboard() {
+      if (!_currentData || !_currentReq) return;
+      const btn = event.target;
+      btn.disabled = true;
+      try {
+        await dbSaveCourse({
+          course_id: Date.now().toString(),
+          title:     _currentData.course_title,
+          subject:   _currentReq.topic,
+          level:     _currentReq.level,
+          role_type: "student",
+          meta:      { topic: _currentReq.topic, level: _currentReq.level, totalWeeks: _currentReq.duration, weeksDone: 0, goal: _currentReq.goal },
+          full_data: _currentData
+        });
+        btn.textContent = "✅ Saved!";
+        setTimeout(() => { btn.textContent = "💾 Save to Dashboard"; btn.disabled = false; }, 2000);
+      } catch (err) {
+        alert("Failed to save: " + err.message);
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

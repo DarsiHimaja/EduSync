@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduSync — Resources</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="res-wrap">
+    <p class="section-title" style="margin-bottom:1.5rem">Resource <span>Generator</span></p>
+
+    <div class="card" style="max-width:560px;margin-bottom:2rem">
+      <div id="res-alert" class="alert"></div>
+      <form id="res-form">
+        <div class="form-group">
+          <label>Topic / Subject</label>
+          <input type="text" name="topic" placeholder="e.g. Python, React, Machine Learning" required/>
+        </div>
+        <div class="form-group">
+          <label>Skill Level</label>
+          <select name="level">
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Resource Type</label>
+          <select name="type">
+            <option value="all">All Types</option>
+            <option value="video">Videos</option>
+            <option value="course">Courses</option>
+            <option value="article">Articles</option>
+            <option value="book">Books</option>
+            <option value="tool">Tools</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" id="res-btn">🔍 Find Resources</button>
+      </form>
+    </div>
+
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <p>Finding the best resources...</p>
+    </div>
+
+    <div id="res-results" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <p id="res-count" style="color:var(--muted);font-size:0.9rem"></p>
+        <div id="filter-btns" style="display:flex;gap:0.5rem;flex-wrap:wrap"></div>
+      </div>
+      <div class="grid-3" id="res-grid"></div>
+    </div>
+  </div>
+
+  <footer>© 2024 EduSync</footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    requireAuth();
+    buildSidebar("Resources");
+
+    let _allResources = [];
+
+    document.getElementById("res-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById("res-alert");
+      alertEl.textContent = ""; alertEl.className = "alert";
+      const form = e.target;
+      const topic = form.topic.value.trim();
+      const level = form.level.value;
+      const type  = form.type.value;
+
+      document.getElementById("loader").style.display = "block";
+      document.getElementById("res-results").style.display = "none";
+      document.getElementById("res-btn").disabled = true;
+
+      try {
+        _allResources = await apiFetch(`/resources?topic=${encodeURIComponent(topic)}&level=${encodeURIComponent(level)}`);
+        renderResources(_allResources, type, topic, level);
+      } catch (err) {
+        alertEl.className = "alert alert-error";
+        alertEl.textContent = err.message;
+      } finally {
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("res-btn").disabled = false;
+      }
+    });
+
+    function renderResources(resources, filterType, topic, level) {
+      const types   = ["all", ...new Set(resources.map(r => r.type))];
+      const filtered = filterType === "all" ? resources : resources.filter(r => r.type === filterType);
+
+      document.getElementById("res-count").textContent = `${filtered.length} resources found for "${topic}" (${level})`;
+
+      document.getElementById("filter-btns").innerHTML = types.map(t => `
+        <button class="btn btn-sm ${t === filterType ? 'btn-primary' : 'btn-outline'}" onclick="filterRes('${t}')">${t === "all" ? "All" : t}</button>`
+      ).join("");
+
+      document.getElementById("res-grid").innerHTML = filtered.map(r => `
+        <div class="resource-card">
+          <div class="resource-top">
+            <span class="badge badge-purple">${r.type}</span>
+            <div style="display:flex;gap:0.4rem;align-items:center">
+              ${r.platform ? `<span class="platform-tag">${r.platform}</span>` : ""}
+              <span class="${r.free ? 'free-tag' : 'paid-tag'}">${r.free ? "Free" : "Paid"}</span>
+            </div>
+          </div>
+          <a href="${r.url}" target="_blank" rel="noopener noreferrer">${r.title}</a>
+          <p>${r.description}</p>
+        </div>`).join("");
+
+      document.getElementById("res-results").style.display = "block";
+    }
+
+    function filterRes(type) {
+      const form  = document.getElementById("res-form");
+      const topic = form.topic.value.trim();
+      const level = form.level.value;
+      renderResources(_allResources, type, topic, level);
+    }
+  </script>
+</body>
+</html>

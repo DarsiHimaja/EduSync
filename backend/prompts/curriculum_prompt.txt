@@ -1,0 +1,62 @@
+You are an expert curriculum designer. Based on the input below, generate a comprehensive, structured, industry-aligned curriculum.
+
+Topic: {topic}
+Level: {level}
+Duration: {duration} weeks
+Goal: {goal}
+
+Return a JSON object with this exact structure:
+{{
+  "course_title": "...",
+  "description": "...",
+  "learning_outcomes": ["outcome1", "outcome2", "outcome3", "outcome4", "outcome5"],
+  "all_topics": [
+    {{
+      "category": "Category Name",
+      "topics": [
+        {{"name": "Topic Name", "description": "One line description of what this topic covers"}}
+      ]
+    }}
+  ],
+  "weekly_plan": [
+    {{
+      "week": 1,
+      "title": "...",
+      "topics": ["topic1", "topic2", "topic3"],
+      "activities": ["activity1", "activity2"]
+    }}
+  ],
+  "resources": [
+    {{
+      "title": "...",
+      "type": "video|article|book|course|tool",
+      "url": "...",
+      "platform": "...",
+      "description": "...",
+      "free": true
+    }}
+  ],
+  "assessments": [
+    {{
+      "question": "Question text here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "answer": 0,
+      "explanation": "Why this answer is correct"
+    }}
+  ],
+  "assessment_ideas": ["Project idea 1", "Project idea 2", "Project idea 3"]
+}}
+
+Rules:
+- all_topics must cover ALL major topics grouped by category (4-6 categories, 4-6 topics each)
+- resources must include exactly 8 entries. Use only these exact base URLs per platform:
+  * YouTube videos: https://www.youtube.com/results?search_query=...  (replace spaces with +)
+  * freeCodeCamp: https://www.freecodecamp.org/news/search/?query=...
+  * Coursera: https://www.coursera.org/search?query=...
+  * edX: https://www.edx.org/search?q=...
+  * MDN: https://developer.mozilla.org/en-US/search?q=...
+  * W3Schools: https://www.w3schools.com (link to relevant section like /python/default.asp)
+  * GeeksforGeeks: https://www.geeksforgeeks.org/... (use topic slug)
+  * Official docs: use real official documentation URLs
+- assessments must have exactly 10 MCQ questions with 4 options each. "answer" is 0-indexed position of correct option.
+- Only return valid JSON, no extra text.

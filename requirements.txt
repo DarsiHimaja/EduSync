@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-jose[cryptography]
+bcrypt
+python-multipart
+groq
+httpx
+python-dotenv
+reportlab
+email-validator

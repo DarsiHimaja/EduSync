@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduSync — Home</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>AI-Powered <span>Curriculum</span> Design</h1>
+    <p>Generate structured, industry-aligned courses, study plans, and curated learning resources — in seconds.</p>
+    <a href="/static/generate.html" class="btn btn-primary">Start Generating →</a>
+    &nbsp;
+    <a href="/static/about.html" class="btn btn-outline">Learn More</a>
+  </section>
+
+  <!-- Features -->
+  <div class="section">
+    <p class="section-title">Why <span>EduSync</span>?</p>
+    <div class="grid-3">
+      <div class="card">
+        <div class="feature-icon">🧠</div>
+        <h3>AI-Generated Plans</h3>
+        <p style="color:var(--muted);margin-top:0.5rem;font-size:0.9rem">
+          Powered by Google Gemini to create week-by-week study plans tailored to your goals and level.
+        </p>
+      </div>
+      <div class="card">
+        <div class="feature-icon">📚</div>
+        <h3>Curated Resources</h3>
+        <p style="color:var(--muted);margin-top:0.5rem;font-size:0.9rem">
+          Get the best books, courses, videos, and tools recommended for your topic — free and paid.
+        </p>
+      </div>
+      <div class="card">
+        <div class="feature-icon">🎯</div>
+        <h3>Learning Outcomes</h3>
+        <p style="color:var(--muted);margin-top:0.5rem;font-size:0.9rem">
+          Clear, measurable learning outcomes aligned with industry expectations and academic standards.
+        </p>
+      </div>
+      <div class="card">
+        <div class="feature-icon">⚡</div>
+        <h3>Instant Generation</h3>
+        <p style="color:var(--muted);margin-top:0.5rem;font-size:0.9rem">
+          No more hours of curriculum planning — get a complete course structure in under 30 seconds.
+        </p>
+      </div>
+      <div class="card">
+        <div class="feature-icon">🏫</div>
+        <h3>For Educators</h3>
+        <p style="color:var(--muted);margin-top:0.5rem;font-size:0.9rem">
+          Built for teachers, trainers, and course creators to design professional academic programs.
+        </p>
+      </div>
+      <div class="card">
+        <div class="feature-icon">🔒</div>
+        <h3>Secure & Private</h3>
+        <p style="color:var(--muted);margin-top:0.5rem;font-size:0.9rem">
+          JWT-secured accounts ensure your generated curricula are private and accessible only to you.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="section">
+    <p class="section-title">How It <span>Works</span></p>
+    <div class="grid-3">
+      <div class="card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:0.8rem">1️⃣</div>
+        <h3>Enter Your Topic</h3>
+        <p style="color:var(--muted);margin-top:0.5rem;font-size:0.9rem">Specify a subject, your skill level, duration, and learning goal.</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:0.8rem">2️⃣</div>
+        <h3>AI Generates</h3>
+        <p style="color:var(--muted);margin-top:0.5rem;font-size:0.9rem">Gemini AI creates a full structured curriculum with weekly plans.</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:0.8rem">3️⃣</div>
+        <h3>Get Resources</h3>
+        <p style="color:var(--muted);margin-top:0.5rem;font-size:0.9rem">Browse hand-picked resources — courses, books, videos, and tools.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2024 EduSync — AI-Powered Curriculum Design</footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>requireAuth(); buildSidebar("Home");</script>
+</body>
+</html>

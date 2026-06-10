@@ -1,0 +1,87 @@
+You are an expert academic curriculum designer. Design a complete multi-semester, industry-aligned course plan for an educator.
+
+Skill/Subject   : {subject}
+Education Level : {level}
+Number of Semesters: {semesters}
+Weekly Hours    : {weekly_hours} hours per week
+Industry Focus  : {industry_focus}
+
+Each semester has 16 weeks. Generate a full plan covering all {semesters} semesters.
+
+Return ONLY a valid JSON object with this exact structure, no extra text:
+{{
+  "course_title": "...",
+  "course_code": "...",
+  "level": "{level}",
+  "total_semesters": {semesters},
+  "weekly_hours": {weekly_hours},
+  "industry_focus": "{industry_focus}",
+  "description": "...",
+  "prerequisites": ["prereq1", "prereq2"],
+  "industry_relevance": "2-3 sentences on how this course aligns with {industry_focus} industry needs",
+  "learning_outcomes": [
+    {{"id": "LO1", "outcome": "...", "bloom_level": "Remember|Understand|Apply|Analyze|Evaluate|Create"}}
+  ],
+  "semesters": [
+    {{
+      "semester": 1,
+      "title": "Semester title",
+      "focus": "What this semester focuses on",
+      "credits": 4,
+      "learning_outcomes": ["LO1", "LO2"],
+      "weekly_plan": [
+        {{
+          "week": 1,
+          "topic": "Topic Title",
+          "subtopics": ["subtopic1", "subtopic2", "subtopic3"],
+          "teaching_method": "Lecture|Lab|Workshop|Seminar|Project",
+          "hours": {weekly_hours},
+          "activities": "Brief description of class activities",
+          "assessment": "Quiz|Assignment|Lab|Project|None"
+        }}
+      ],
+      "semester_assessments": {{
+        "assignments": [{{"title": "...", "week_due": 4, "description": "...", "marks": 10}}],
+        "quizzes":     [{{"title": "...", "week": 3,    "topics": "...",       "marks": 10}}],
+        "projects":    [{{"title": "...", "type": "Individual|Group", "description": "...", "marks": 30, "deliverables": ["..."]}}],
+        "lab_exercises":[{{"title": "...", "week": 2,   "description": "...", "tools": ["..."]}}]
+      }},
+      "mark_distribution": {{
+        "assignments": 20, "quizzes": 20, "midterm": 20, "project": 30, "lab": 10
+      }}
+    }}
+  ],
+  "outcome_topic_mapping": [
+    {{
+      "outcome_id": "LO1",
+      "outcome_text": "...",
+      "bloom_level": "...",
+      "mapped_semesters": [1, 2],
+      "mapped_topics": ["topic1", "topic2"],
+      "assessment_types": ["Quiz", "Assignment"]
+    }}
+  ],
+  "resources": [
+    {{
+      "title": "...",
+      "type": "textbook|video|course|article|tool",
+      "url": "...",
+      "platform": "...",
+      "free": true,
+      "description": "..."
+    }}
+  ],
+  "recommended_tools": ["tool1", "tool2"],
+  "industry_projects": [
+    {{"title": "...", "description": "...", "skills_covered": ["..."], "semester": 1}}
+  ]
+}}
+
+Rules:
+- Generate exactly {semesters} semester objects each with exactly 16 weeks in weekly_plan
+- learning_outcomes must have 5-7 outcomes covering all Bloom's taxonomy levels
+- Each week must have hours equal to {weekly_hours}
+- resources must include exactly 8 entries with real working search-based URLs
+- industry_projects must have 1 project per semester aligned with {industry_focus}
+- outcome_topic_mapping must cover every LO
+- Only return valid JSON, no extra text.

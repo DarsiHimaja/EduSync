@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduSync — Login</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <style>
+    .role-select { display:flex; gap:1rem; margin-bottom:1.4rem; }
+    .role-btn { flex:1; padding:0.7rem; border:1.5px solid var(--border); border-radius:10px; background:var(--bg); color:var(--muted); cursor:pointer; font-size:0.9rem; font-weight:600; text-align:center; transition:all 0.2s; }
+    .role-btn:hover { border-color:var(--primary); color:var(--text); }
+    .role-btn.selected { border-color:var(--primary); background:rgba(108,99,255,0.12); color:var(--primary); }
+    .role-btn .role-icon { font-size:1.5rem; display:block; margin-bottom:0.3rem; }
+    input[name="role"] { display:none; }
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+
+      <div style="text-align:center;margin-bottom:1.2rem">
+        <span style="font-size:2rem;font-weight:800;color:var(--primary)">Edu<span style="color:var(--accent)">Sync</span></span>
+      </div>
+
+      <h2 id="auth-title">Welcome Back</h2>
+      <p id="auth-sub" style="color:var(--muted);margin-bottom:1.5rem;font-size:0.9rem">Sign in to continue</p>
+
+      <div id="auth-alert" class="alert"></div>
+
+      <form id="auth-form" autocomplete="off">
+
+        <!-- Role (shown on both login & register) -->
+        <div style="margin-bottom:1.2rem">
+          <label style="display:block;margin-bottom:0.5rem;font-size:0.9rem;color:var(--muted)">I am a</label>
+          <div class="role-select">
+            <label class="role-btn selected" id="role-student">
+              <span class="role-icon">🎓</span> Student
+              <input type="radio" name="role" value="student" checked/>
+            </label>
+            <label class="role-btn" id="role-educator">
+              <span class="role-icon">🏫</span> Educator
+              <input type="radio" name="role" value="educator"/>
+            </label>
+          </div>
+        </div>
+
+        <!-- Email (register only) -->
+        <div class="form-group hidden" id="field-email">
+          <label>Email Address</label>
+          <input type="email" name="email" placeholder="you@example.com"/>
+        </div>
+
+        <!-- Username -->
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" placeholder="Enter username" required/>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" placeholder="Enter password" required/>
+        </div>
+
+        <!-- Confirm Password (register only) -->
+        <div class="form-group hidden" id="field-confirm">
+          <label>Confirm Password</label>
+          <input type="password" name="confirm_password" placeholder="Re-enter password"/>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.4rem">
+          <span id="btn-text">Sign In</span>
+        </button>
+      </form>
+
+      <div class="auth-toggle" style="text-align:center;margin-top:1.2rem;font-size:0.9rem;color:var(--muted)">
+        Don't have an account? <a id="toggle-link" style="color:var(--primary);cursor:pointer;text-decoration:underline">Register</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    // ── Role toggle UI ──────────────────────────────────────────────────────
+    document.querySelectorAll("input[name='role']").forEach(radio => {
+      radio.addEventListener("change", () => {
+        document.getElementById("role-student").classList.toggle("selected", radio.value === "student");
+        document.getElementById("role-educator").classList.toggle("selected", radio.value === "educator");
+      });
+    });
+    document.querySelectorAll(".role-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const r = btn.querySelector("input");
+        r.checked = true;
+        r.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+    });
+
+    // ── Login / Register toggle ─────────────────────────────────────────────
+    let isLogin = true;
+
+    function setMode(login) {
+      isLogin = login;
+      document.getElementById("auth-title").textContent   = login ? "Welcome Back"        : "Create Account";
+      document.getElementById("auth-sub").textContent     = login ? "Sign in to continue" : "Join EduSync today";
+      document.getElementById("btn-text").textContent     = login ? "Sign In"              : "Register";
+      document.getElementById("toggle-link").textContent  = login ? "Register"             : "Sign In";
+      document.getElementById("toggle-link").previousSibling.textContent = login
+        ? "Don't have an account? " : "Already have an account? ";
+
+      document.getElementById("field-email").classList.toggle("hidden", login);
+      document.getElementById("field-confirm").classList.toggle("hidden", login);
+
+      // email & confirm_password required only on register
+      document.querySelector("input[name='email']").required           = !login;
+      document.querySelector("input[name='confirm_password']").required = !login;
+
+      document.getElementById("auth-alert").className = "alert";
+      document.getElementById("auth-alert").textContent = "";
+    }
+
+    document.getElementById("toggle-link").addEventListener("click", () => setMode(!isLogin));
+
+    // ── Form submit ─────────────────────────────────────────────────────────
+    document.getElementById("auth-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById("auth-alert");
+      alertEl.className = "alert"; alertEl.textContent = "";
+
+      const f        = e.target;
+      const username = f.username.value.trim();
+      const password = f.password.value;
+      const role     = f.querySelector("input[name='role']:checked").value;
+
+      try {
+        if (isLogin) {
+          const data = await apiFetch("/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ username, password })
+          });
+          localStorage.setItem("cf_token",   data.access_token);
+          localStorage.setItem("cf_user",    data.username);
+          localStorage.setItem("cf_role",    data.role);
+          localStorage.setItem("cf_user_id", data.user_id);
+          localStorage.setItem("cf_email",   data.email);
+          window.location.href = "/static/home.html";
+        } else {
+          const email            = f.email.value.trim();
+          const confirm_password = f.confirm_password.value;
+          await apiFetch("/auth/register", {
+            method: "POST",
+            body: JSON.stringify({ username, email, password, confirm_password, role })
+          });
+          alertEl.className   = "alert alert-success";
+          alertEl.textContent = "✅ Registered successfully! Please sign in.";
+          setMode(true);
+        }
+      } catch (err) {
+        alertEl.className   = "alert alert-error";
+        alertEl.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>
