@@ -88,7 +88,7 @@ EduSync follows a multi-layer client-server architecture consisting of frontend,
 
 ## Architecture Diagram
 
-![EduSync Architecture](assets/architecture.png)
+![EduSync Architecture](assests/architecture.png)
 
 ### Architecture Components
 
@@ -166,7 +166,7 @@ The following workflow demonstrates how educator inputs are processed through th
 
 ## Workflow Diagram
 
-![Curriculum Workflow](assets/workflow.png)
+![Curriculum Workflow](assests/workflow.png)
 
 ## Workflow Steps
 
@@ -189,7 +189,7 @@ The AI pipeline transforms educator requirements into structured educational con
 
 ## AI Pipeline Diagram
 
-![AI Pipeline](assets/pipeline.png)
+![AI Pipeline](assests/pipeline.png)
 
 ---
 
