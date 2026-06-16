@@ -12,11 +12,11 @@ pip install -r requirements.txt
 ### 2. Configure API keys
 Edit `.env` and add your keys:
 ```
-GEMINI_API_KEY=your_gemini_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 SECRET_KEY=any_random_secret_string
 ```
 
-Get a free Gemini API key at: https://aistudio.google.com/app/apikey
+Get a free Groq API key at: https://console.groq.com/keys
 
 ### 3. Run the server
 ```bash
